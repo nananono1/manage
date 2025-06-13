@@ -45,10 +45,12 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import android.content.pm.ResolveInfo;
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+
     private final BroadcastReceiver refreshReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -58,16 +60,6 @@ public class MainActivity extends AppCompatActivity {
             populateAllowedApps();
         }
     };
-
-    private boolean isAppInstalled(String packageName) {
-        PackageManager pm = getPackageManager();
-        try {
-            pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
-            return true;
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,9 +99,36 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, AdminSettingsActivity.class);
             startActivity(intent);
         });
+
         RemoteConfigManager remoteConfigManager = new RemoteConfigManager();
         remoteConfigManager.fetchAndApplyRemoteConfig(getApplicationContext());
 
+        // ✅ [추가] 홈 런처로 설정되어 있다면 boot_receiver_enabled 저장
+        if (isDefaultLauncher()) {
+            SharedPreferences prefs = getSharedPreferences("admin_settings", MODE_PRIVATE);
+            if (!prefs.getBoolean("boot_receiver_enabled", false)) {
+                prefs.edit().putBoolean("boot_receiver_enabled", true).apply();
+                Toast.makeText(this, "부트 리시버가 활성화되었습니다.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    // ✅ [추가] 현재 앱이 기본 런처로 설정되어 있는지 확인
+    private boolean isDefaultLauncher() {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo resolveInfo = getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        return resolveInfo != null && resolveInfo.activityInfo.packageName.equals(getPackageName());
+    }
+
+    private boolean isAppInstalled(String packageName) {
+        PackageManager pm = getPackageManager();
+        try {
+            pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
     }
 
     public static boolean isAccessibilityServiceEnabled(Context context, Class<?> service) {
@@ -245,61 +264,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    private void installSubAppFromHosting() {
-//        new Thread(() -> {
-//            try {
-//                URL url = new URL("ht tps://naegong-student-qgbwcp.web.app/subappV2.apk");
-//                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-//                conn.connect();
-//
-//                File apkFile = new File(getFilesDir(), "subappV2.apk");
-//
-//                try (InputStream in = conn.getInputStream();
-//                     OutputStream out = new FileOutputStream(apkFile)) {
-//                    byte[] buffer = new byte[4096];
-//                    int len;
-//                    while ((len = in.read(buffer)) != -1) {
-//                        out.write(buffer, 0, len);
-//                    }
-//                }
-//
-//                runOnUiThread(() -> {
-//                    try {
-//                        WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
-//                        InputStream is = getAssets().open("wallpaper.jpg");
-//                        Bitmap bitmap = BitmapFactory.decodeStream(is);
-//                        wallpaperManager.setBitmap(bitmap);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                        Toast.makeText(this, "배경화면 설정 실패", Toast.LENGTH_SHORT).show();
-//                    }
-//
-//                    try {
-//                        Uri apkUri = FileProvider.getUriForFile(
-//                                this,
-//                                getPackageName() + ".provider",
-//                                apkFile
-//                        );
-//
-//                        Intent intent = new Intent(Intent.ACTION_VIEW);
-//                        intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-//                        startActivity(intent);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                        Toast.makeText(this, "앱 설치 유도 실패", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                runOnUiThread(() ->
-//                        Toast.makeText(this, "APK 다운로드 또는 설치 실패", Toast.LENGTH_LONG).show()
-//                );
-//            }
-//        }).start();
-//    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -314,6 +278,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // 아무 동작도 하지 않음
+        // 뒤로가기 막기
     }
 }

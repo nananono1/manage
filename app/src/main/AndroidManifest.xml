@@ -3,12 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.naegong.manage">
 
-    <!-- ✅ 필요한 권한 추가 -->
-    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN"/>
+    <!-- ✅ 필수 권한들 -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
@@ -25,7 +25,7 @@
         android:theme="@style/Theme.Manage"
         tools:targetApi="31">
 
-        <!-- ✅ 접근성 기반 앱 차단 서비스 등록 -->
+        <!-- ✅ 접근성 기반 앱 차단 서비스 -->
         <service
             android:name=".AppBlockerService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
@@ -38,7 +38,7 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <!-- ✅ 디바이스 관리자 리시버 -->
+        <!-- ✅ 디바이스 오너 앱을 위한 관리자 권한 리시버 -->
         <receiver
             android:name=".MyDeviceAdminReceiver"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
@@ -51,15 +51,17 @@
             </intent-filter>
         </receiver>
 
-        <!-- ✅ 부팅 후 자동 실행 리시버 -->
-        <receiver android:name=".BootReceiver"
+        <!-- ✅ 부팅 후 자동 실행할 BroadcastReceiver -->
+        <receiver
+            android:name=".BootReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
+        <!-- ✅ 알림 차단 기능용 NotificationListenerService -->
         <service
             android:name=".NotificationBlockerService"
             android:label="Notification Blocker"
@@ -70,7 +72,7 @@
             </intent-filter>
         </service>
 
-        <!-- ✅ FileProvider 설정 -->
+        <!-- ✅ FileProvider: APK 설치 및 이미지 저장용 -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -81,7 +83,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- ✅ 메인 액티비티 - 홈 런처 역할 포함 -->
+        <!-- ✅ 홈 런처 역할을 수행할 MainActivity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -94,14 +96,14 @@
             </intent-filter>
         </activity>
 
+        <!-- ✅ 관리자 설정 화면 -->
         <activity android:name=".AdminSettingsActivity" />
 
-
-        <!-- ✅ PIN 인증 액티비티 추가 -->
+        <!-- ✅ PIN 인증 다이얼로그 -->
         <activity
             android:name=".PinLockActivity"
             android:theme="@android:style/Theme.DeviceDefault.Dialog.NoActionBar"
             android:exported="true" />
+
     </application>
 </manifest>
-
