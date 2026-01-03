@@ -86,12 +86,16 @@ public class AdminSettingsActivity extends AppCompatActivity {
 
     private void loadAdminSettingsUI() {
         setContentView(R.layout.activity_admin);
-        Button chromeButton = findViewById(R.id.buttonEnableChrome);
-        Button youtubeButton = findViewById(R.id.buttonEnableYouTube);
+
+        // ✅ [수정] 개별 토글 버튼 대신 '차단 앱 관리' 화면으로 이동하는 버튼 연결
+        Button btnManageBlockedApps = findViewById(R.id.buttonManageBlockedApps);
+        btnManageBlockedApps.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminSettingsActivity.this, BlockAppListActivity.class);
+            startActivity(intent);
+        });
+
         Button resetButton = findViewById(R.id.buttonResetData);
 
-        chromeButton.setOnClickListener(v -> toggleBlockedApp("com.android.chrome"));
-        youtubeButton.setOnClickListener(v -> toggleBlockedApp("com.google.android.youtube"));
 
         // ⬇️ AdminSettingsActivity.java - loadAdminSettingsUI() 안의 resetButton 클릭 리스너를 다음으로 교체
         resetButton.setOnClickListener(v -> {

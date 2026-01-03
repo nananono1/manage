@@ -8,23 +8,18 @@
     android:background="#000000">
 
     <Button
-        android:id="@+id/buttonEnableChrome"
+        android:id="@+id/buttonManageBlockedApps"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="크롬 활성화 변경"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/buttonEnableYouTube"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="유튜브 활성화 변경"
-        android:layout_marginBottom="16dp"/>
-
+        android:text="차단 앱 관리 (앱 선택)"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:layout_marginBottom="24dp"/>
 
     <Button
         android:id="@+id/buttonResetData"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="데이터 초기화"/>
+        android:text="데이터 초기화"
+        android:backgroundTint="#D32F2F"/>
 </LinearLayout>
