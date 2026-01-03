@@ -1,101 +1,126 @@
 package com.naegong.manage;
 
 import android.app.DownloadManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.OutputStream;
 
 public class UpdateManager {
 
     private static final String TAG = "UpdateManager";
     private static final String SUBAPP_PACKAGE = "com.naegongstudy.app";
 
-    // ✅ 1. 서브앱 설치 여부 및 버전 체크
     public static void checkSubAppUpdate(Context context, String remoteVersion, String apkUrl) {
         String installedVersion = getInstalledSubAppVersion(context);
 
-        if (installedVersion == null) {
-            Log.d(TAG, "서브앱 미설치됨 → 설치 유도");
-            downloadAndInstallApk(context, apkUrl);
-        } else if (!installedVersion.equals(remoteVersion)) {
-            Log.d(TAG, "서브앱 버전 불일치: " + installedVersion + " → " + remoteVersion);
+        if (installedVersion == null || !installedVersion.equals(remoteVersion)) {
+            Log.d(TAG, "📥 업데이트 필요 → 다운로드 및 설치 시작");
             downloadAndInstallApk(context, apkUrl);
         } else {
-            Log.d(TAG, "서브앱 최신 버전 유지 중: " + installedVersion);
+            Toast.makeText(context, "이미 최신 버전입니다.", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // ✅ 2. 설치된 서브앱 버전 확인
     private static String getInstalledSubAppVersion(Context context) {
         try {
             PackageManager pm = context.getPackageManager();
             PackageInfo info = pm.getPackageInfo(SUBAPP_PACKAGE, 0);
             return info.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            return null; // 설치 안 되어 있음
+            return null;
         }
     }
 
-    // ✅ 3. APK 다운로드 및 설치 트리거
     private static void downloadAndInstallApk(Context context, String apkUrl) {
         try {
-            // 🔹 3-1. URL에서 파일명 자동 추출
-            String fileName = Uri.parse(apkUrl).getLastPathSegment(); // 예: subApp_v1.2.0.apk
+            String fileName = Uri.parse(apkUrl).getLastPathSegment();
+            File apkFile = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
+            if (apkFile.exists()) apkFile.delete();
 
-            // 🔹 3-2. 저장 경로 설정
-            File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
-            if (file.exists()) file.delete(); // 기존 파일 제거
-
-            // 🔹 3-3. 다운로드 요청 설정
             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(apkUrl));
-            request.setTitle("서브앱 업데이트 중");
-            request.setDescription("최신 버전 설치 파일을 다운로드합니다.");
+            request.setTitle("업데이트 다운로드 중");
+            request.setDescription("최신 버전 설치 파일을 받고 있습니다...");
             request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName);
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
 
-            // 🔹 3-4. 다운로드 시작
             DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-            manager.enqueue(request);
+            long downloadId = manager.enqueue(request);
 
-            Log.d(TAG, "✅ APK 다운로드 시작됨: " + fileName);
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context ctx, Intent intent) {
+                    long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                    if (id == downloadId) {
+                        context.unregisterReceiver(this);
+                        installApkWithInstaller(ctx, apkFile);
+                    }
+                }
+            };
 
-            // 설치는 별도 BroadcastReceiver를 쓰거나, 딜레이 후 시도 가능
+            context.registerReceiver(receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
 
         } catch (Exception e) {
             Log.e(TAG, "❌ APK 다운로드 실패", e);
+            Toast.makeText(context, "APK 다운로드 실패", Toast.LENGTH_LONG).show();
         }
     }
 
-    // ✅ 4. APK 설치 유도 함수 (다운로드 후 수동 또는 자동 호출)
-    public static void installApk(Context context, File apkFile) {
+    // ✅ PackageInstaller 기반 설치
+    private static void installApkWithInstaller(Context context, File apkFile) {
         try {
-            if (!apkFile.exists() || apkFile.length() == 0) {
-                Log.e(TAG, "❌ 설치할 파일이 존재하지 않음");
+            if (!apkFile.exists()) {
+                Toast.makeText(context, "설치 파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Uri apkUri = FileProvider.getUriForFile(
+            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+            int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+
+            try (FileInputStream in = new FileInputStream(apkFile);
+                 OutputStream out = session.openWrite("subapp_session", 0, -1)) {
+                byte[] buffer = new byte[65536];
+                int c;
+                while ((c = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, c);
+                }
+                session.fsync(out);
+            }
+
+            // ✅ 설치 결과를 수신할 리시버 설정
+            Intent intent = new Intent(context, InstallResultReceiver.class);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     context,
-                    context.getPackageName() + ".provider",
-                    apkFile
+                    sessionId,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
 
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            context.startActivity(intent);
+            session.commit(pendingIntent.getIntentSender());
+            session.close();
 
-        } catch (ActivityNotFoundException e) {
-            Log.e(TAG, "❌ 설치 인텐트를 실행할 수 없습니다", e);
+        } catch (Exception e) {
+            Log.e(TAG, "❌ PackageInstaller 설치 실패", e);
+            Toast.makeText(context, "설치 실패: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }

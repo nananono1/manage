@@ -24,7 +24,7 @@
             android:orientation="vertical"
             android:gravity="center_horizontal">
 
-            <!-- ✅ 필수 앱 -->
+            <!-- 필수 앱 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
                 android:useDefaultMargins="true"
                 android:layout_gravity="center_horizontal" />
 
-            <!-- ✅ 학습 앱 -->
+            <!-- 학습 앱 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
                 android:useDefaultMargins="true"
                 android:layout_gravity="center_horizontal" />
 
-            <!-- ✅ 유틸리티 앱 -->
+            <!-- 유틸리티 앱 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -83,14 +83,42 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- ⚙️ 설정 열기 버튼 -->
-    <Button
-        android:id="@+id/settingsButton"
+    <!-- 데이터 초기화 + 업데이트 버튼 (가로 배치) -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="데이터 초기화"
-        android:textSize="16sp"
+        android:orientation="horizontal"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="12dp"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="12dp"
+        android:gravity="center_horizontal"
+        android:baselineAligned="false">
+
+        <Button
+            android:id="@+id/settingsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="데이터 초기화"
+            android:textSize="16sp"
+            android:layout_marginEnd="12dp" />
+
+        <Button
+            android:id="@+id/checkUpdateButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="업데이트 확인"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+    <!-- 버전 상태 출력 -->
+    <TextView
+        android:id="@+id/versionStatusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"
+        android:text="버전 상태 표시 영역" />
+
 </LinearLayout>

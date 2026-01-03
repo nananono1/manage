@@ -8,11 +8,19 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN" />
+    <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="com.naegong.permission.SEND_STUDENT_INFO" />
+
+
+    <!-- ✅ 같은 서명키로 서명된 앱만 이 permission을 가질 수 있음(signature) -->
+    <permission
+        android:name="com.naegong.permission.SEND_STUDENT_INFO"
+        android:protectionLevel="signature" />
 
     <application
         android:allowBackup="true"
@@ -50,6 +58,11 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
+
+        <!-- ✅ 설치 결과 수신 리시버 (중복 제거: 하나만 유지) -->
+        <receiver
+            android:name=".InstallResultReceiver"
+            android:exported="true" />
 
         <!-- ✅ 부팅 후 자동 실행할 BroadcastReceiver -->
         <receiver
@@ -103,7 +116,10 @@
         <activity
             android:name=".PinLockActivity"
             android:theme="@android:style/Theme.DeviceDefault.Dialog.NoActionBar"
-            android:exported="true" />
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:taskAffinity="" />
 
     </application>
 </manifest>

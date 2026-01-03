@@ -38,7 +38,21 @@ public class AppConfig {
             "com.android.chrome",
             "com.instagram.android",
             "com.kakao.talk",
-            "com.sec.android.app.sbrowser"
+            "com.sec.android.app.sbrowser",
+            "com.samsung.android.bixby.agent",
+            "com.samsung.android.app.spage",
+            "com.samsung.android.app.newspage",
+            "com.nhn.android.blog",
+            "com.zhiliaoapp.musically",
+            "com.twitter.android",
+            "com.naver.whale",
+            "com.sec.android.app.myfiles",
+            "com.samsung.android.game.gamehome",
+            "com.samsung.android.email.provider",
+            "com.samsung.android.app.notes",
+            "com.sec.android.app.camera",
+            "com.sec.android.app.samsungapps"
+
     ));
 
     // ✅ SharedPreferences가격 저장된 유틸리티 앱 목록 가져오기
@@ -66,6 +80,19 @@ public class AppConfig {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putStringSet(BLOCKED_APPS_KEY, blockedSet).apply();
     }
+
+    // ⬇️ AppConfig.java 에 아래 필드 추가 (클래스 내부 어딘가 적당한 위치)
+    public static final List<String> extraResetCandidates = Arrays.asList(
+            // ── 캘린더 관련 ─────────────────────────────────────────────
+            "com.android.providers.calendar",          // AOSP Calendar Storage(실제 일정 DB)
+            "com.google.android.syncadapters.calendar",// Google 캘린더 동기화 어댑터(있으면)
+            "com.samsung.android.calendar",            // 삼성 캘린더 앱(UI) - 이미 allowedEssentialApps에 있지만 명시
+            // ── 시계/알람 관련 ─────────────────────────────────────────
+            "com.android.deskclock",                   // AOSP 시계 앱
+            "com.sec.android.app.clockpackage"         // 삼성 시계/알람 앱(이미 allowedEssentialApps 포함)
+            // 필요시 기기별 패키지 추가
+    );
+
 
     // ✅ 최종 차단 앱 반환 (기본 + RemoteConfig)
     public static Set<String> getBlockedApps(Context context) {
